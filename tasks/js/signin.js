@@ -12,14 +12,20 @@ $(function() {
 	$('.form-signin').submit(function(evt) {
 		evt.preventDefault();
 		
+		var newSignIn = $(this);
 		var email = $('#inputEmail').val();
 		var password = $('#inputPassword').val();
+
+		var addButton = newSignIn.find(':submit'); // jquery- finds the submit form
+			addButton.prop('disabled', true).addClass('working');
 		
 		Parse.User.logIn(email, password).then(function() {
 			window.location = 'index.html';
+			addButton.prop('disabled', false).removeClass('working');
 		}, function(err) {
 			showError(err);
+			addButton.prop('disabled', false).removeClass('working');
 		});
-
 	});
+
 });
