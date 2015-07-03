@@ -33,7 +33,12 @@ $(function() {
 
 	var TaskList = Parse.Collection.extend({ //curly braces create a javascript object on the fly
 		model: Task,
-		query: tasksQuery
+		query: tasksQuery,
+		getCompleted: function() {
+			return this.filter(function(task){
+				return task.get('done');
+			});
+		} 
 	});
 
 	var tasks = new TaskList();
@@ -45,8 +50,23 @@ $(function() {
 		this.forEach(function(task) {
 			var taskItem = $(document.createElement('li'));
 			taskItem.text(task.get('title'));
-			taskList.append(taskItem)
+			if (task.get('done')) {
+				taskItem.addClass('task-done');
+			}
+			taskItem.click(function() {
+				task.set('done', !task.get('done'));
+				task.save();
+			});
+
+			taskList.append(taskItem);
 		});
+
+		//show or hide button purge based on completed tasks
+		if (this.getCompleted().length > 0) {
+			$('.btn-purge').fadeIn(200);
+		} else {
+			$('.btn-purge').fadeOut(200);
+		}
 	});
 
 	tasks.fetch();
@@ -60,12 +80,21 @@ $(function() {
 		newTask.set('user', currentUser);
 		newTask.set('done', false);
 
+		var addButton = newTaskForm.find(':submit'); // jquery- finds the submit form
+		addButton.prop('disabled', true).addClass('working');
+
 		newTask.save().then(function() {
 			tasks.add(newTask);
 			newTitleInput.val(''); // to clear an input 
+			addButton.prop('disabled', false).removeClass('working');
 		}, function(err) {
 			showError(err);
+			addButton.prop('disabled', false).removeClass('working');
 		});
+	});
+
+	$('.btn-purge').click(function() {
+		Parse.Object.destroyAll(tasks.getCompleted());
 	});
 
 });
